@@ -27,6 +27,6 @@ The runtime of the model is dominated by the amount of time it takes to load the
 Since we don't support batch processing, we cannot get around loading the model once per call. If we supported batch mode, we would 
 only have to pay this price once. 
 
-Tested on MacOS and Archlinux. While ort supports cuda, didn't try the cuda backend, because it is not likely that loading the model to the gpu would be
+Tested on MacOS and Archlinux. While ort supports cuda, didn't try the cuda backend. It is not likely that loading the model to the gpu would be
 faster than loading it to ram. By modern standards the model is tiny, and it likely wouldn't make much difference to inference time anyway.
 
