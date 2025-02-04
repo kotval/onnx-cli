@@ -2,9 +2,7 @@ use clap::{Parser, ValueEnum};
 use image::{imageops::FilterType, ImageBuffer, Luma, Pixel};
 use ndarray;
 use ort::{
-    execution_providers::TensorRTExecutionProvider,
-    session::{Session},
-    tensor::ArrayExtensions,
+    execution_providers::TensorRTExecutionProvider, session::Session, tensor::ArrayExtensions,
 };
 use std::str::FromStr;
 
@@ -53,7 +51,10 @@ fn main() -> anyhow::Result<()> {
         .expect("input0 to be a tensor type");
     // load image, resize to correct size for model
     if !args.image.exists() {
-        return Err(anyhow::anyhow!("Error: file {} does not exist",args.image.display()))
+        return Err(anyhow::anyhow!(
+            "Error: file {} does not exist",
+            args.image.display()
+        ));
     }
     let image_buffer: ImageBuffer<Luma<u8>, Vec<u8>> = image::open(&args.image)?
         .resize(
