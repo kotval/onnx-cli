@@ -6,6 +6,7 @@ In particular, we support jpg, png, and webp. If you don't already have the onnx
 it will be downloaded and cached for you on first run.
 
 ## Usage
+````
 Usage: onnx-cli --image <IMAGE> [OUTPUT]
 
 Arguments:
@@ -15,6 +16,7 @@ Options:
   -i, --image <IMAGE>  
   -h, --help           Print help
   -V, --version        Print version
+````
 
 ## Performance
 ````
