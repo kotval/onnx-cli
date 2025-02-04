@@ -1,9 +1,8 @@
 use std::str::FromStr;
-use std::path::{Path,PathBuf};
 use clap::{Parser, ValueEnum};
 use image::{ImageBuffer, Luma, Pixel, imageops::FilterType};
 use ort::{
-    execution_providers::TensorRTExecutionProvider, session::{builder::GraphOptimizationLevel, Session}, tensor::ArrayExtensions, value::TensorRef
+    execution_providers::TensorRTExecutionProvider, session::{builder::GraphOptimizationLevel, Session}, tensor::ArrayExtensions
 };
 use ndarray;
 
@@ -33,7 +32,6 @@ struct Cli{
 const MINST_MODEL_URL: &str = "https://github.com/onnx/models/raw/refs/heads/main/validated/vision/classification/mnist/model/mnist-12.onnx";
 
 fn main() -> ort::Result<()>{
-    let LOCAL_MODEL_PATH: PathBuf = Path::new(env!("CARGO_MANIFEST_DIR")).join("model_cache").join("mnist-12.onnx");
     // parse user input
     let args = Cli::parse();
     //load model
@@ -41,8 +39,11 @@ fn main() -> ort::Result<()>{
 	let model = Session::builder()?
         .with_execution_providers([TensorRTExecutionProvider::default().build()])?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
+        //Note: this method caches the model after the first call. If we wanted to ship the model with the binary,
+        // we could use commit_from_file instead. Additionally, if we wanted to control how cached occured, we would
+        // essentially need to implement our own version of commit_from_url. The runtime is dominated by loading the model
+        // into memory, but since we aren't implementing batch processing, we just have to pay the price of the load.
 		.commit_from_url(MINST_MODEL_URL)?;
-        //.commit_from_file(&LOCAL_MODEL_PATH)?;
     let model_load_time = before_model_load.elapsed();
     let before_image_load = std::time::Instant::now();
     let input_shape: &Vec<i64> = model.inputs[0].input_type.tensor_dimensions().expect("input0 to be a tensor type");
@@ -72,6 +73,18 @@ fn main() -> ort::Result<()>{
     let inference_time = before_inference.elapsed();
     let total_time = before_model_load.elapsed();
 	probabilities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-    println!("file: {} prediction: {} probability: {} model_load_time {:.2?}, image_load_time {:.2?} inference_time {:.2?} total_time {:.2?}", &args.image.display(), probabilities[0].0,probabilities[0].1,model_load_time,image_load_time,inference_time,total_time);
+    match args.output {
+        OutputTypes::Json => {
+            println!(
+                "{{\"pred\":{},\"prob\":{},\"time_ms\":{}}}",
+                probabilities[0].0,
+                probabilities[0].1,
+                total_time.as_millis()
+            );
+        }
+        OutputTypes::Human => {
+            println!("prediction: {} probability: {} model_load_time {:.2?}, image_load_time {:.2?} inference_time {:.2?} total_time {:.2?}", probabilities[0].0,probabilities[0].1,model_load_time,image_load_time,inference_time,total_time);
+        }
+    }
     Ok(())
 }
