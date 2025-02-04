@@ -52,8 +52,10 @@ fn main() -> anyhow::Result<()> {
         .tensor_dimensions()
         .expect("input0 to be a tensor type");
     // load image, resize to correct size for model
-    let image_buffer: ImageBuffer<Luma<u8>, Vec<u8>> = image::open(&args.image)
-        .expect("file not found")
+    if !args.image.exists() {
+        return Err(anyhow::anyhow!("Error: file {} does not exist",args.image.display()))
+    }
+    let image_buffer: ImageBuffer<Luma<u8>, Vec<u8>> = image::open(&args.image)?
         .resize(
             input_shape[2] as u32,
             input_shape[3] as u32,
